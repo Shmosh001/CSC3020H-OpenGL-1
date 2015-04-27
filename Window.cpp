@@ -82,6 +82,7 @@ void Window::keyPressEvent( QKeyEvent* e )
 {
     switch ( e->key() )
     {
+        //rotate
         case Qt::Key_R:
             std::cout << "Rotate" << std::endl;
             w->rotation = true;
@@ -95,6 +96,7 @@ void Window::keyPressEvent( QKeyEvent* e )
             }
             break;
 
+        //translate
         case Qt::Key_T:
             w->rotation = false;
             w->translation = true;
@@ -106,6 +108,7 @@ void Window::keyPressEvent( QKeyEvent* e )
             }
             break;
 
+        //scale
         case Qt::Key_S:
             w->rotation = false;
             w->translation = false;
@@ -135,12 +138,28 @@ void Window::wheelEvent(QWheelEvent *event)
 
     if(w->rotation == false && w->translation == true && w->scale == false)
     {
+        if(event->delta() > 0)
+        {
+            w->translateImage(true, t);
+        }
 
+        else
+        {
+            w->translateImage(false, t);
+        }
     }
 
     if(w->rotation == false && w->translation == false && w->scale == true)
     {
+        if(event->delta() > 0)
+        {
+            w->scaleImage(true);
+        }
 
+        else
+        {
+            w->scaleImage(false);
+        }
     }
 
 }

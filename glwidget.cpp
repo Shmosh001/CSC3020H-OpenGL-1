@@ -255,6 +255,7 @@ void GLWidget::stopDraw()
     canDraw = false;
 }
 
+//rotates image
 void GLWidget::rotateImage(bool direction, int axis)
 {
     float amount = 15;
@@ -294,14 +295,60 @@ void GLWidget::rotateImage(bool direction, int axis)
 
 }
 
-void GLWidget::translateImage(bool direction)
+//translates image
+void GLWidget::translateImage(bool direction, int axis)
 {
+    float amount = 0.01f;
+    if(direction == false)
+    {
+        amount = -0.01f;
+    }
 
+    //x-axis
+    if(axis == 1)
+    {
+        this->Model = glm::translate(this->Model, glm::vec3(amount,0,0));
+        MVP = Projection * View * this->Model;
+        GLuint MatrixID = glGetUniformLocation(m_shader.programId(), "MVP");
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    }
+
+    //y-axis
+    if(axis == 2)
+    {
+        this->Model = glm::translate(this->Model, glm::vec3(0,amount,0));
+        MVP = Projection * View * this->Model;
+        GLuint MatrixID = glGetUniformLocation(m_shader.programId(), "MVP");
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    }
+
+    //z-axis
+    if(axis == 3)
+    {
+        this->Model = glm::translate(this->Model, glm::vec3(0, 0,amount));
+        MVP = Projection * View * this->Model;
+        GLuint MatrixID = glGetUniformLocation(m_shader.programId(), "MVP");
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    }
+
+    this->repaint();
 }
 
+//scales image
 void GLWidget::scaleImage(bool direction)
 {
 
+    float amount = 1.5f;
+    if(direction == false)
+    {
+        amount = 0.5f;
+    }
+
+    this->Model = glm::scale(this->Model, glm::vec3(amount,amount,amount));
+    MVP = Projection * View * this->Model;
+    GLuint MatrixID = glGetUniformLocation(m_shader.programId(), "MVP");
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    this->repaint();
 }
 
 

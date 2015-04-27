@@ -25,7 +25,7 @@ public:
     bool translation;
     bool scale;
     void rotateImage(bool direction, int axis); //rotate image
-    void translateImage(bool direction); //translate image
+    void translateImage(bool direction, int axis); //translate image
     void scaleImage(bool direction); //scale image
 
 
