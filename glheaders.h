@@ -41,6 +41,7 @@ class CheckSucc{
  private:
     bool succ;
     QString msg_;
+
 };
 
 #define IF_FAIL(msg) CheckSucc(QString(QString(msg) + QString(" @ Line ") + QString::number(__LINE__) +  QString(" of ") +  QString(__FILE__)))

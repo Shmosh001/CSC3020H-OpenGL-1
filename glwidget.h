@@ -25,9 +25,10 @@ protected:
 private:
     bool prepareShaderProgram( const QString& vertexShaderPath,
                                const QString& fragmentShaderPath );
-
+    unsigned long numTri;
     QOpenGLShaderProgram m_shader;
     QOpenGLBuffer m_vertexBuffer;
+
 };
 
 #endif // GLWIDGET_H
