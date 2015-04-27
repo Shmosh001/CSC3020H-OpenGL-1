@@ -18,6 +18,13 @@ GLWidget::GLWidget( const QGLFormat& format, QWidget* parent )
 
 void GLWidget::initializeGL()
 {
+    //allows the stl image to be drawn
+    canDraw = true;
+
+     rotation = true;
+     translation = false;
+     scale = false;
+
     // Resolve OpenGL functions
     glewExperimental = true;
     GLenum GlewInitResult = glewInit();
@@ -67,7 +74,11 @@ void GLWidget::initializeGL()
         qWarning() << "Could not bind vertex buffer to the context";
         return;
     }
-    m_vertexBuffer.allocate( points, numTri * 3 * 4 * sizeof( float ) );
+    if(canDraw == true)
+    {
+        m_vertexBuffer.allocate( points, numTri * 3 * 4 * sizeof( float ) );
+    }
+
 
     qDebug() << "Attempting vertex shader load from " << VERT_SHADER;
     qDebug() << "Attempting fragment shader load from " << FRAG_SHADER;
@@ -104,21 +115,14 @@ void GLWidget::paintGL()
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     // Draw stuff
-    glDrawArrays( GL_TRIANGLES, 0, 3 * numTri);
-}
-
-void GLWidget::keyPressEvent( QKeyEvent* e )
-{
-    switch ( e->key() )
+    if(canDraw == true)
     {
-        case Qt::Key_Escape:
-            QCoreApplication::instance()->quit();
-            break;
-
-        default:
-            QGLWidget::keyPressEvent( e );
+        glDrawArrays( GL_TRIANGLES, 0, 3 * numTri);
     }
+
 }
+
+
 
 bool GLWidget::prepareShaderProgram( const QString& vertexShaderPath,
                                      const QString& fragmentShaderPath )
@@ -141,20 +145,21 @@ bool GLWidget::prepareShaderProgram( const QString& vertexShaderPath,
     return result;
 }
 
+//set up camera to view stl image
 void GLWidget::setupCamera()
 {
     // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-    glm::mat4 Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+    Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
     // Camera matrix
-    glm::mat4 View       = glm::lookAt(
-        glm::vec3(4,3,3), // Camera is at (4,3,3), in World Space
+    View = glm::lookAt(
+        glm::vec3(0.5,0.5,0.5), // Camera is at (4,3,3), in World Space
         glm::vec3(0,0,0), // and looks at the origin
         glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
     // Model matrix : an identity matrix (model will be at the origin)
-    glm::mat4 Model      = glm::mat4(1.0f);  // Changes for each model !
+    Model      = glm::mat4(1.0f);  // Changes for each model !
     // Our ModelViewProjection : multiplication of our 3 matrices
-    glm::mat4 MVP        = Projection * View * Model; // Remember, matrix multiplication is the other way around
+    MVP        = Projection * View * Model; // Remember, matrix multiplication is the other way around
 
     // Get a handle for our "MVP" uniform.
     // Only at initialisation time.
@@ -166,6 +171,7 @@ void GLWidget::setupCamera()
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 }
 
+//reads a stl file
 std::vector<float> GLWidget::readFile(std::string fileName)
 {
     using namespace std;
@@ -212,14 +218,11 @@ std::vector<float> GLWidget::readFile(std::string fileName)
             v.push_back(1.0f);
 
             char vertex7[4] = {facet[36],facet[37], facet[38], facet[39]};
-            float v7 = *((float*)vertex7);
-            v.push_back(v7);
+            v.push_back(*((float*)vertex7));
             char vertex8[4] = {facet[40],facet[41], facet[42], facet[43]};
-            float v8 = *((float*)vertex8);
-            v.push_back(v8);
+            v.push_back(*((float*)vertex8));
             char vertex9[4] = {facet[44],facet[45], facet[46], facet[47]};
-            float v9 = *((float*)vertex9);
-            v.push_back(v9);
+            v.push_back(*((float*)vertex9));
             v.push_back(1.0f);
         }
         else{
@@ -228,3 +231,79 @@ std::vector<float> GLWidget::readFile(std::string fileName)
     }
     return v;
 }
+
+//loads an image
+void GLWidget::loadImage(std::vector<float> pointsArr)
+{
+
+    canDraw = true; //allows image to be drawn
+    m_vertexBuffer.create();
+    m_vertexBuffer.setUsagePattern( QOpenGLBuffer::StaticDraw );
+    if ( !m_vertexBuffer.bind() )
+    {
+        qWarning() << "Could not bind vertex buffer to the context";
+        return;
+    }
+    float *points = &pointsArr[0];
+    m_vertexBuffer.allocate( points, numTri * 3 * 4 * sizeof( float ) );
+
+}
+
+//stops image being drawn
+void GLWidget::stopDraw()
+{
+    canDraw = false;
+}
+
+void GLWidget::rotateImage(bool direction, int axis)
+{
+    float amount = 15;
+    if(direction == false)
+    {
+        amount = -15;
+    }
+
+    //x-axis
+    if(axis == 1)
+    {
+        this->Model = glm::rotate(this->Model, glm::radians(amount), glm::vec3(1.0f,0,0));
+        MVP = Projection * View * this->Model;
+        GLuint MatrixID = glGetUniformLocation(m_shader.programId(), "MVP");
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    }
+
+    //y-axis
+    if(axis == 2)
+    {
+        this->Model = glm::rotate(this->Model, glm::radians(amount), glm::vec3(0,1.0f,0));
+        MVP = Projection * View * this->Model;
+        GLuint MatrixID = glGetUniformLocation(m_shader.programId(), "MVP");
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    }
+
+    //z-axis
+    if(axis == 3)
+    {
+        this->Model = glm::rotate(this->Model, glm::radians(amount), glm::vec3(0,0,1.0f));
+        MVP = Projection * View * this->Model;
+        GLuint MatrixID = glGetUniformLocation(m_shader.programId(), "MVP");
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    }
+
+    this->repaint();
+
+}
+
+void GLWidget::translateImage(bool direction)
+{
+
+}
+
+void GLWidget::scaleImage(bool direction)
+{
+
+}
+
+
+
+
