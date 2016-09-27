@@ -146,6 +146,7 @@ bool GLWidget::prepareShaderProgram( const QString& vertexShaderPath,
 }
 
 //set up camera to view stl image
+//camera method adapted from opengl tutorial 3
 void GLWidget::setupCamera()
 {
     // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
